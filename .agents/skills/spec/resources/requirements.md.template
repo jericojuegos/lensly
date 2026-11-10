@@ -1,19 +1,19 @@
-# ðŸ“‹ Feature Requirements: [Feature Name] (`[NN-feature-slug]`)
+# 📋 Feature Requirements: [Feature Name] (`[NN-feature-slug]`)
 
-> **Feature Slug:** `[NN-feature-slug]` Â· **Phase / Wave:** `Phase [N] (Wave [W])`  
+> **Feature Slug:** `[NN-feature-slug]` · **Phase / Wave:** `Phase [N] (Wave [W])`  
 > **Depends On:** `[00-scaffold / prerequisite-slug / None]`  
-> **Branch / Owner:** `feat/[feature-slug]` Â· **Status:** `[ ]` Planned
+> **Branch / Owner:** `feat/[feature-slug]` · **Status:** `[ ]` Planned
 
 ---
 
 ## 1. Introduction & Overview
 
-[1â€“2 paragraphs explaining the problem this feature solves, who uses it, where it lives in the application, and how it fits into `docs/foundation/prd.md` and `docs/foundation/architecture.md`.]
+[1–2 paragraphs explaining the problem this feature solves, who uses it, where it lives in the application, and how it fits into `docs/foundation/prd.md` and `docs/foundation/architecture.md`.]
 
 ### Assumptions (Flagged for Review)
 
-- **A1 ([Topic â€” e.g., Mount point / Auth scope]):** [State the assumption made so the developer/user can confirm or override before coding.] **Needs confirmation / Confirmed.**
-- **A2 ([Topic â€” e.g., Data source / Prefix]):** [State the assumption.] **Needs confirmation / Confirmed.**
+- **A1 ([Topic — e.g., Mount point / Auth scope]):** [State the assumption made so the developer/user can confirm or override before coding.] **Needs confirmation / Confirmed.**
+- **A2 ([Topic — e.g., Data source / Prefix]):** [State the assumption.] **Needs confirmation / Confirmed.**
 
 ### Domain Glossary
 
