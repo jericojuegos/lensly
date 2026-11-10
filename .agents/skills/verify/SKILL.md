@@ -3,8 +3,10 @@ name: verify
 description: >-
   Run Level 1 (Automated build/types/tests), Level 2 (EARS functional smoke checks),
   and Level 3 (Visual fidelity against design-reference/*.png & Stack Hard-Failure review)
-  verification against docs/specs/<NN-feature-slug>/uat.md. Use after completing feature
-  tasks or when the user invokes /verify.
+  verification against docs/specs/<NN-feature-slug>/uat.md, or triage an external security/code
+  audit report (docs/audits/*.md) with automatic ALREADY FIXED detection and right-sized routing
+  (Direct Fix vs. Remediation /spec). Use after completing feature tasks, when auditing security
+  reports, or when the user invokes /verify.
 ---
 
 # 🧪 Skill: Feature Verification & Hard-Failure Review (`/verify`)
@@ -73,17 +75,25 @@ Verify each numbered requirement (`Req 1.1`, `Req 1.2`, etc.) and each row of th
 
 ---
 
-## Step 5 — Evidence-Only Review Gate, External AI Review Arbiter & Session Self-Healing
+## Step 5 — Evidence-Only Review Gate, External Audit Router (`docs/audits/`) & Session Self-Healing
 
-To prevent multi-model review ping-pong (Gemini vs. Claude vs. Codex) and capture lessons when the user runs `/verify` after a debugging session (or when "something feels wrong"):
+To prevent multi-model review ping-pong (Gemini vs. Claude vs. Codex), handle external security/code audit files (`docs/audits/*.md`), and capture lessons when the user runs `/verify`:
 
 1. **Evidence-Only Severity Filter (Zero Stylistic Bikeshedding):**
    - Only report **`[P0 — Blocker]`** (provable bug, security/auth/RLS/nonce flaw, broken EARS requirement, or `stack-rules.md` Hard Failure) and **`[P1 — Defect]`** (unhandled `design.md` Error Matrix case or race condition) with exact `file:line` and a concrete trigger path.
    - Suppress **`[P2 — Style/Nitpick]`** opinions (DRY vs. inline preferences, hypothetical scale, or decisions already settled in `docs/foundation/decisions.md` or `design.md`).
-2. **Arbiter Mode (When Triaging Findings from Another Dev's Claude / Codex Audit):**
-   - If the user pastes findings from an external AI review or another developer who did not use `/verify`, evaluate each item against `design.md`, `decisions.md`, and `.agents/rules/stack-rules.md`:
-     - **`✅ ACCEPT (P0/P1)`:** Real bug, exploit path, or spec violation → fix and re-run Level 1 verification.
-     - **`🛡️ REJECT (P2 / False Positive / Settled Decision)`:** Subjective style preference or already guarded upstream → do **not** modify code; output a 1-line technical rationale citing the exact file/line or `decisions.md` entry.
+2. **Arbiter Mode & External Audit Router (When Passed `docs/audits/*.md` or Pasted External Review):**
+   - **Step 2a — Live Codebase 3-Bucket Triage (Never Trust Stale Reports Blindly):**
+     Inspect the actual live codebase, `design.md`, `docs/foundation/decisions.md`, and `.agents/rules/stack-rules.md` for every finding in the audit and classify each into one of 3 buckets:
+     - **`✅ ALREADY FIXED`:** The live codebase already contains the fix or guard (cite exact `file:line` proof). Do **not** generate tasks for already-fixed items.
+     - **`🛡️ REJECT (P2 / False Positive / Settled Decision)`:** Subjective style preference, impossible trigger path, or already guarded upstream → do **not** modify code; output a 1-line technical rebuttal citing the exact `file:line` or `decisions.md` entry.
+     - **`🔴 OPEN P0 / P1 (Actionable Defect / Vulnerability)`:** Verified still-open bug, exploit path, or spec/stack-rule violation in the current code (cite exact `file:line`).
+   - **Step 2b — Automatic Right-Sized Remediation Router (Direct Fix vs. New `/spec`):**
+     Count the verified **`🔴 OPEN P0 / P1`** items and their blast radius, then automatically route:
+     - **Path A — Direct Fix Inside `/verify` (`<= 3 files` touched AND zero DB schema / Auth architecture / Shared contract changes):**
+       Fix the open `P0/P1` items immediately, add regression unit tests (`execution-protocol.md` §6.1), re-run Level 1 terminal verification, and log the fixes in the active `tasks.md` Activity Log (or audit file summary).
+     - **Path B — Auto-Route to Remediation `/spec` (`4+ files` touched OR requires DB schema / Auth flow / Cross-module architecture changes):**
+       Do **not** make unplanned multi-file edits inline. Output the triage table (`✅ ALREADY FIXED`, `🛡️ REJECT`, `🔴 OPEN P0/P1`) and immediately generate (or ask once to confirm generating) a dedicated remediation spec bundle (`docs/specs/<NN-security-remediation>/`) via `../spec/SKILL.md` containing **only** the verified `🔴 OPEN P0 / P1` findings.
 3. **Automatic Session Self-Healing & Brain-Gap Routing:**
    - Scan any bugs, build failures, or user corrections that occurred during this feature session and automatically route them without asking the user where they belong:
      - **Project-Specific Rule/Edge Case** → Auto-update `AGENTS.md`, `docs/foundation/decisions.md`, or `design.md`.
@@ -97,8 +107,8 @@ To prevent multi-model review ping-pong (Gemini vs. Claude vs. Codex) and captur
 Output a clear verification report:
 
 ```markdown
-## 🧪 Verification Report: `<NN-feature-slug>`
-**Result:** ✅ PASS / ❌ FAIL
+## 🧪 Verification Report: `<NN-feature-slug or docs/audits/report.md>`
+**Result:** ✅ PASS / ❌ FAIL / 🔀 ROUTED TO `/spec`
 
 - **Level 1 (Build, Types & Tests):** [PASS/FAIL]
 - **Stack Hard-Failure Audit:** [PASS/FAIL]
@@ -106,7 +116,7 @@ Output a clear verification report:
 - **Level 3 (Visual Match vs `design-reference/` & Tokens):** [PASS/FAIL]
 - **Evidence Artifacts (`evidence/`):** [Playwright E2E screenshots saved / Unit+API citations in `uat.md`]
 - **P0 / P1 Defects Found:** [0 — Ready to Ship / List with file:line + trigger path]
-- **External Review Triage (If applicable):** [Accepted X P0/P1 · Rejected Y P2/False Positives]
+- **External Audit Triage (If applicable):** [Already Fixed: X · Rejected (P2/False Positive): Y · Open P0/P1: Z → Direct Fix (<=3 files) OR Routed to `docs/specs/NN-security-remediation/` (4+ files)]
 - **🧠 Self-Healing & Brain Updates:** [None needed / Updated `AGENTS.md` / Logged `issues.md` / `shikamaru/feedback.md` signal]
 ```
 

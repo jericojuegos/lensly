@@ -118,6 +118,7 @@ Match the skill to the size of the work:
 | **B. New Unplanned Feature / Ticket** | New scope not yet in `roadmap.md` | **`/spec`** (creates spec folder + adds row to `roadmap.md`) → **`/build`** | `docs/specs/<NN-feature-slug>/` + `docs/planning/roadmap.md` |
 | **C. Small Update / Polish (`<= 2 files`, `< 30 min`)** | Copy tweak, UI styling adjustment, or minor validation | **Fast-Track:** Skip creating a new spec folder! Append a `- [ ]` task under `## 🐛 Ad-Hoc / Small Enhancements` in the **existing** `docs/specs/<NN-feature-slug>/tasks.md` → **`/build`** | Existing `docs/specs/<NN-feature-slug>/tasks.md` |
 | **D. Bug Fix** | Broken build, runtime error, or regression | Fix + add regression unit test + run terminal verification → log under `## 📝 Feature Activity Log` in the related `docs/specs/<NN-feature-slug>/tasks.md` + run **6.1 Automatic Self-Healing Check** below (or run **`/spec`** for `fix-<bug-slug>` if 4+ files) | Related `docs/specs/<NN-feature-slug>/tasks.md` + auto-routed Brain updates |
+| **E. External Security / Code Audit (`docs/audits/*.md`)** | Third-party or teammate audit `.md` report | **`/verify docs/audits/<report>.md`** → Auto-triages live code (`✅ ALREADY FIXED`, `🛡️ REJECT`, `🔴 OPEN P0/P1`) and auto-routes: **Direct Fix** (`<= 3 files`) vs. **Remediation `/spec`** (`4+ files` or DB/Auth changes) | `docs/audits/<report>.md` + Direct Fix or `docs/specs/<NN-security-remediation>/` |
 
 ### 6.1 Automatic Self-Healing After Any Bug Fix or User Correction (Zero Extra Commands)
 
@@ -149,10 +150,14 @@ To prevent multi-model review ping-pong (where Gemini, Claude, and Codex contrad
    - **`[P2 — Nitpick / Subjective Style]`:** Naming preferences, DRY vs. inline philosophy, hypothetical scale concerns, or redundant defensive checks already guaranteed by types/framework. **DO NOT report `P2` items unless explicitly asked for stylistic suggestions.**
 3. **Zero Forced Fault-Finding:** If zero `P0` or `P1` defects exist, report **`✅ 0 P0/P1 Findings — Ready to Ship`**. Never invent nitpicks to appear thorough.
 
-### B. Arbiter Mode: Triaging External Reviews (When Another Dev/Model Doesn't Use BFD Skills)
-When a teammate or external bot runs Claude, Codex, or another AI reviewer without BFD skills and pastes their findings:
-1. **Never Blindly Apply External AI Feedback:** Act as the **Arbiter** before changing any code.
-2. **Classify Each External Finding Against the Brain:**
-   - **ACCEPT (`P0` / `P1`):** Has a concrete reproduction/exploit path OR violates `.agents/rules/stack-rules.md` / `design.md`. Fix it and verify in terminal.
-   - **REJECT (`P2` / False Positive / Settled Decision):** Subjective refactor preference, contradicts `docs/foundation/decisions.md` or `design.md`, or is already protected by an upstream boundary (e.g., middleware, RLS, Zod/Pydantic schema, WP capability check). Draft a 1-line rebuttal citing the exact file/decision so the developer can reply to the reviewer.
-3. **1-Pass Review Cap:** Perform at most **1 Arbiter triage + fix pass** per feature/PR. Once deterministic checks (`build`/`typecheck`/`tests`) and `P0`/`P1` items pass, ship.
+### B. Arbiter Mode: Triaging External Reviews & Audit Files (`docs/audits/*.md`)
+When a teammate or external tool drops a security/code audit report in `docs/audits/*.md` (or pastes findings from Claude, Codex, or another reviewer):
+1. **Never Blindly Apply External Feedback:** Act as the **Arbiter** and inspect the live codebase before changing any code or generating tasks.
+2. **Classify Each External Finding into 3 Buckets Against the Live Code & Brain:**
+   - **`✅ ALREADY FIXED`:** The live codebase already contains the guard or fix (cite exact `file:line`). Skip it so stale audit items never become duplicate work.
+   - **`🛡️ REJECT` (`P2` / False Positive / Settled Decision):** Subjective refactor preference, contradicts `docs/foundation/decisions.md` or `design.md`, or is already protected by an upstream boundary (e.g., middleware, RLS, Zod/Pydantic schema, WP nonce/capability check). Draft a 1-line rebuttal citing the exact `file:line` or ADR so the developer can reply to the reviewer.
+   - **`🔴 OPEN P0 / P1` (Actionable Defect / Vulnerability):** Verified still-open bug or exploit path in the current code (with exact `file:line`).
+3. **Automatic Right-Sized Remediation Router (Direct Fix vs. New `/spec`):**
+   - **Direct Fix (`<= 3 files` touched AND zero DB/Auth architecture changes):** Fix immediately during `/verify`, add regression unit tests (§6.1), and run terminal verification.
+   - **Remediation `/spec` (`4+ files` touched OR changes DB schema / Auth flow / Shared contracts):** Do not make blind multi-file edits inline; route ONLY the verified `🔴 OPEN P0 / P1` items into a dedicated `docs/specs/<NN-security-remediation>/` bundle via `/spec`.
+4. **1-Pass Review Cap:** Perform at most **1 Arbiter triage + fix pass** per feature/PR. Once deterministic checks (`build`/`typecheck`/`tests`) and `P0`/`P1` items pass, ship.
